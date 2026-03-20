@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eid Salami Spin Wheel</title>
+  <style>
+    :root {
+      --bg1: #0f172a;
+      --bg2: #1e293b;
+      --card: rgba(255,255,255,0.08);
+      --text: #f8fafc;
+      --muted: #cbd5e1;
+      --accent: #f59e0b;
+      --accent2: #22c55e;
+      --danger: #ef4444;
+      --shadow: 0 20px 40px rgba(0,0,0,0.25);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top, rgba(245,158,11,0.18), transparent 28%),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+    .app {
+      width: min(100%, 980px);
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 24px;
+      align-items: center;
+    }
+    .panel {
+      background: var(--card);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+    }
+    .left {
+      padding: 24px;
+      display: grid;
+      place-items: center;
+    }
+    .right {
+      padding: 28px;
+    }
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(28px, 4vw, 44px);
+      line-height: 1.05;
+    }
+    .subtitle {
+      color: var(--muted);
+      margin: 0 0 22px;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+    .wheel-wrap {
+      position: relative;
+      width: min(100%, 520px);
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+    }
+    .pointer {
+      position: absolute;
+      top: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 5;
+      width: 0;
+      height: 0;
+      border-left: 20px solid transparent;
+      border-right: 20px solid transparent;
+      border-top: 36px solid #fff;
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,0.35));
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.04);
+      box-shadow: inset 0 0 0 10px rgba(255,255,255,0.08), var(--shadow);
+    }
+    .center-btn {
+      position: absolute;
+      width: 118px;
+      height: 118px;
+      border-radius: 50%;
+      border: 8px solid rgba(255,255,255,0.12);
+      background: linear-gradient(180deg, #fff, #fde68a);
+      color: #111827;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+      cursor: pointer;
+      box-shadow: 0 12px 25px rgba(0,0,0,0.3);
+      transition: transform 0.16s ease, filter 0.16s ease;
+    }
+    .center-btn:hover { transform: scale(1.03); filter: brightness(1.02); }
+    .center-btn:disabled { cursor: not-allowed; opacity: 0.75; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.08);
+      color: #fde68a;
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 14px;
+      margin-bottom: 14px;
+    }
+    .result {
+      margin-top: 18px;
+      padding: 16px 18px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.08);
+      min-height: 76px;
+      display: flex;
+      align-items: center;
+      font-size: 18px;
+      line-height: 1.5;
+    }
+    .result strong {
+      color: #fde68a;
+      font-size: 24px;
+    }
+    .options {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 10px;
+    }
+    .opt {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--text);
+      font-weight: 600;
+      text-align: center;
+    }
+    .note {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .footer {
+      margin-top: 20px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      border: none;
+      background: linear-gradient(180deg, var(--accent2), #16a34a);
+      color: white;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn.secondary {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text);
+    }
+    @media (max-width: 860px) {
+      .app { grid-template-columns: 1fr; }
+      .right { order: -1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="panel left">
+      <div class="wheel-wrap">
+        <div class="pointer"></div>
+        <canvas id="wheel" width="700" height="700"></canvas>
+        <button class="center-btn" id="spinBtn">SPIN</button>
+      </div>
+    </div>
+
+    <div class="panel right">
+      <div class="pill">✨ Eid Salami Spin Wheel</div>
+      <h1>Spin to reveal your reward</h1>
+      <p class="subtitle">
+        This wheel is designed so the result lands on <strong>DUA</strong> every time,
+        while still looking like a real spinning prize wheel.
+      </p>
+
+      <div class="result" id="resultBox">
+        Click <strong style="margin-left:8px; margin-right:8px;">SPIN</strong> to start.
+      </div>
+
+      <div class="options">
+        <div class="opt">DUA</div>
+        <div class="opt">10tk</div>
+        <div class="opt">20tk</div>
+        <div class="opt">100tk</div>
+        <div class="opt">200tk</div>
+        <div class="opt">500tk</div>
+        <div class="opt">1000tk</div>
+      </div>
+
+      <div class="footer">
+        <button class="btn secondary" id="resetBtn">Reset</button>
+      </div>
+
+      <p class="note">
+        Ready for GitHub Pages, Netlify, Vercel, or any static hosting.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    const items = ["DUA", "10tk", "20tk", "100tk", "200tk", "500tk", "1000tk"];
+    const colors = [
+      "#22c55e", "#38bdf8", "#a78bfa", "#fb7185", "#f59e0b", "#14b8a6", "#f97316"
+    ];
+
+    const canvas = document.getElementById("wheel");
+    const ctx = canvas.getContext("2d");
+    const spinBtn = document.getElementById("spinBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const resultBox = document.getElementById("resultBox");
+
+    const size = canvas.width;
+    const cx = size / 2;
+    const cy = size / 2;
+    const radius = size / 2 - 16;
+    const slice = (Math.PI * 2) / items.length;
+
+    let rotation = 0;
+    let spinning = false;
+    let animationFrame = null;
+
+    function drawWheel() {
+      ctx.clearRect(0, 0, size, size);
+
+      for (let i = 0; i < items.length; i++) {
+        const start = rotation + i * slice - Math.PI / 2;
+        const end = start + slice;
+
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, radius, start, end);
+        ctx.closePath();
+        ctx.fillStyle = colors[i];
+        ctx.fill();
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(start + slice / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 34px Arial";
+        ctx.shadowColor = "rgba(0,0,0,0.25)";
+        ctx.shadowBlur = 6;
+        ctx.fillText(items[i], radius - 34, 12);
+        ctx.restore();
+      }
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.lineWidth = 12;
+      ctx.strokeStyle = "rgba(255,255,255,0.82)";
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(cx, cy, 62, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(255,255,255,0.18)";
+      ctx.fill();
+      ctx.lineWidth = 10;
+      ctx.strokeStyle = "rgba(255,255,255,0.38)";
+      ctx.stroke();
+    }
+
+    function normalizeAngle(a) {
+      const two = Math.PI * 2;
+      return ((a % two) + two) % two;
+    }
+
+    function spinToDua() {
+      if (spinning) return;
+      spinning = true;
+      spinBtn.disabled = true;
+      resultBox.innerHTML = "Spinning...";
+
+      // Pointer is at top (-90deg).
+      // We want DUA slice center to finish under the top pointer.
+      // Since DUA is index 0, its center angle is rotation + slice/2.
+      // For top pointer, target center angle is 0 radians in normalized wheel space after our drawing offset logic.
+      // We compute a target rotation that lands in the DUA slice consistently.
+      const fullSpins = 6 + Math.floor(Math.random() * 3); // 6 to 8 turns
+      const landingOffsetWithinDua = (Math.random() * 0.45 - 0.225) * slice; // small random offset within DUA slice
+      const targetRotation = (Math.PI * 2 * fullSpins) - (slice / 2) + landingOffsetWithinDua;
+
+      const startRotation = rotation;
+      const change = targetRotation;
+      const duration = 5200;
+      const startTime = performance.now();
+
+      function easeOutCubic(t) {
+        return 1 - Math.pow(1 - t, 3);
+      }
+
+      function animate(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = easeOutCubic(progress);
+        rotation = startRotation + change * eased;
+        drawWheel();
+
+        if (progress < 1) {
+          animationFrame = requestAnimationFrame(animate);
+        } else {
+          spinning = false;
+          spinBtn.disabled = false;
+          resultBox.innerHTML = 'Result: <strong>DUA</strong> 🤲';
+        }
+      }
+
+      cancelAnimationFrame(animationFrame);
+      animationFrame = requestAnimationFrame(animate);
+    }
+
+    function resetWheel() {
+      cancelAnimationFrame(animationFrame);
+      rotation = 0;
+      spinning = false;
+      spinBtn.disabled = false;
+      resultBox.innerHTML = 'Click <strong style="margin-left:8px; margin-right:8px;">SPIN</strong> to start.';
+      drawWheel();
+    }
+
+    spinBtn.addEventListener("click", spinToDua);
+    resetBtn.addEventListener("click", resetWheel);
+
+    drawWheel();
+  </script>
+</body>
+</html>
